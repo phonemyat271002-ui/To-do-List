@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My To-Do List</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div class="splash-screen" id="splash">
+    <h1> 📝 To-Do List</h1>
+    <p>Created by: <strong>Aung Phone Myat </strong></p>
+    <p>ID:  <strong>240702402013</strong></p>
+    <button id="enterBtn">Today's plan</button>
+  </div>
+
+  <!-- To-Do App -->
+  <div class="app-container" id="app">
+    <h2>📝 To-Do List</h2>
+    <p class="note">⚠️ Your tasks will disappear after 24 hours.</p>
+    <div class="input-box">
+      <input type="text" id="taskInput" placeholder="Add a new task...">
+      <button onclick="addTask()">＋</button>
+    </div>
+    <ul id="taskList"></ul>
+  </div>
+
+  <script>
+    const splash = document.getElementById("splash");
+    const app = document.getElementById("app");
+    const enterBtn = document.getElementById("enterBtn");
+
+    // Enter App
+    enterBtn.addEventListener("click", () => {
+      splash.style.display = "none";   // hide splash completely
+      app.style.display = "flex";      // show app
+      loadTasks();                     // load saved tasks
+    });
+
+    // Add Task
+    function addTask() {
+      const input = document.getElementById("taskInput");
+      const taskText = input.value.trim();
+      if (taskText === "") return;
+
+      const task = { text: taskText, done: false };
+      addTaskToDOM(task);
+      saveTask(task);
+      input.value = "";
+    }
+
+    // Add task to screen
+    function addTaskToDOM(task) {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span>${task.text}</span>
+        <button class="mark-done" onclick="markDone(this)">✔</button>
+      `;
+      if (task.done) li.classList.add("done");
+      document.getElementById("taskList").appendChild(li);
+    }
+
+    // Mark as Done (sketch)
+    function markDone(button) {
+      const li = button.parentElement;
+      li.classList.toggle("done");
+      updateStorage();
+    }
+
+    // Save new task
+    function saveTask(task) {
+      let saved = JSON.parse(localStorage.getItem("todoData")) || { time: Date.now(), tasks: [] };
+      saved.tasks.push(task);
+      saved.time = Date.now();
+      localStorage.setItem("todoData", JSON.stringify(saved));
+    }
+
+    // Update storage when marking done
+    function updateStorage() {
+      const tasks = [];
+      document.querySelectorAll("#taskList li").forEach(li => {
+        tasks.push({
+          text: li.querySelector("span").innerText,
+          done: li.classList.contains("done")
+        });
+      });
+      localStorage.setItem("todoData", JSON.stringify({ time: Date.now(), tasks }));
+    }
+
+    // Load tasks (if within 24 hours)
+    function loadTasks() {
+      const saved = JSON.parse(localStorage.getItem("todoData"));
+      if (!saved) return;
+
+      const now = Date.now();
+      const hoursPassed = (now - saved.time) / (1000 * 60 * 60);
+      if (hoursPassed > 24) {
+        localStorage.removeItem("todoData");
+        return;
+      }
+
+      saved.tasks.forEach(task => addTaskToDOM(task));
+    }
+  </script>
+</body>
+</html>
